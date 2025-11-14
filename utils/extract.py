@@ -11,21 +11,17 @@ HEADERS = {
 }
 
 def fetching_content(url):
-    """Mengambil konten HTML dari URL yang diberikan."""
     session = requests.Session()
     try:
         response = session.get(url, headers=HEADERS)
-        response.raise_for_status()  # Akan raise error jika status code bukan 2xx
+        response.raise_for_status()
         return response.content
     except requests.exceptions.RequestException as e:
         print(f"Terjadi kesalahan ketika melakukan requests terhadap {url}: {e}")
         return None
 
 def extract_product_data(card):
-    """
-    Mengambil data produk (Title, Price, Rating, Colors, Size, Gender) 
-    dari elemen <div class="collection-card">.
-    """
+
     details = card.find('div', class_='product-details')
     if not details:
         return None
@@ -43,14 +39,8 @@ def extract_product_data(card):
         text = p.text.strip()
         if text.startswith("Rating:"):
             rating = text
-        
-        # --- PERBAIKAN LOGIKA DI SINI ---
-        # Menggunakan endswith("Colors") untuk menangkap "3 Colors", "5 Colors", dll.
-        # Ini juga akan menangkap "Colors:" dari produk invalid.
         elif text.endswith("Colors") or text.endswith("Colors:"):
             colors = text
-        # --------------------------------
-            
         elif text.startswith("Size:"):
             size = text
         elif text.startswith("Gender:"):
@@ -70,9 +60,7 @@ def extract_product_data(card):
     return product
 
 def scrape_products(delay=1):
-    """
-    Fungsi utama untuk scraping. Mengambil data dari halaman 1 sampai 50.
-    """
+
     BASE_URL = "https://fashion-studio.dicoding.dev/?page={}"
     data = []
     
@@ -98,27 +86,10 @@ def scrape_products(delay=1):
                 time.sleep(delay) 
             else:
                 print(f"Gagal mengambil konten dari halaman {page_number}. Melanjutkan...")
-                
-                # --- PERBAIKAN LOGIKA DI SINI ---
-                # Ubah 'break' menjadi 'continue'
-                # Ini akan melewatkan halaman yang gagal dan lanjut ke halaman berikutnya.
                 continue
-                # --------------------------------
 
         except Exception as e:
             print(f"An error occurred during scraping on page {page_number}: {e}")
             continue 
 
     return data
-
-if __name__ == '__main__':
-    print("Mulai scraping (mode testing)...")
-    scraped_data = scrape_products()
-    
-    if scraped_data:
-        print(f"Berhasil mengambil {len(scraped_data)} data.")
-        print("Contoh 5 data pertama:")
-        for item in scraped_data[:5]:
-            print(item)
-    else:
-        print("Tidak ada data yang berhasil di-scrape.")
