@@ -1,0 +1,69 @@
+=== 1. Persiapan Environment ===
+
+1.1. Buat virtual environment baru
+Linux/Ubuntu
+python3 -m venv .env
+
+Windows
+py -m venv .env
+
+1.2. Aktifkan virtual environment
+POSIX (bash/zsh)
+source .env/bin/activate
+
+Windows (PowerShell)
+.env\Scripts\Activate.ps1
+
+1.3. Install semua library yang dibutuhkan
+pip install -r requirements.txt
+
+
+=== 2. Persiapan Database (PostgreSQL) ===
+
+2.1. Buka terminal 'psql' sebagai superuser (postgres)
+psql --username postgres
+
+2.2. Jalankan perintah SQL berikut untuk membuat user dan database:
+# Buat user baru (developer)
+CREATE USER developer WITH ENCRYPTED PASSWORD 'supersecretpassword';
+
+# Buat database baru
+CREATE DATABASE fashion_db;
+
+# Berikan hak akses penuh ke user 'developer'
+GRANT ALL ON DATABASE fashion_db TO developer;
+
+# Jadikan 'developer' sebagai pemilik database
+ALTER DATABASE fashion_db OWNER TO developer;
+
+# Keluar dari psql (opsional)
+\q
+
+
+=== 3. Menjalankan Skrip ETL Pipeline ===
+
+3.1. Pastikan .env sudah aktif dan database sudah disiapkan.
+
+3.2. Jalankan skrip ETL pipeline lengkap:
+py main.py
+
+
+=== 4. Menjalankan Pengujian ===
+
+4.1. Menjalankan unit test
+py -m pytest tests
+
+4.2. Menjalankan test coverage
+coverage run -m pytest tests
+
+# Melihat coverage yang dihasilkan
+coverage report -m
+
+
+=== 5. Informasi Lain ===
+
+Url Google Sheets:
+https://docs.google.com/spreadsheets/d/1CCsYdkD5IpSvtAhhDRM0haSyPeY27VPhxF8P9hNYThU/edit?usp=sharing
+
+# Catatan: Perintah di atas menggunakan 'py' untuk Windows.
+Pengguna macOS/Linux mungkin perlu menggunakan 'python3'.
