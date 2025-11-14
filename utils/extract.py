@@ -2,14 +2,14 @@ import time
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
-
+ 
 HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
         "(KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"
     )
 }
-
+ 
 def fetching_content(url):
     session = requests.Session()
     try:
@@ -19,22 +19,28 @@ def fetching_content(url):
     except requests.exceptions.RequestException as e:
         print(f"Terjadi kesalahan ketika melakukan requests terhadap {url}: {e}")
         return None
-
+ 
 def extract_product_data(card):
-
+ 
     details = card.find('div', class_='product-details')
     if not details:
         return None
-
+ 
     title_element = details.find('h3', class_='product-title')
     title = title_element.text.strip() if title_element else None
-
-    price_container = details.find('div', class_='price-container')
-    price = price_container.text.strip() if price_container else None
+ 
+    price_container = card.find('div', class_='price-container')
+    price_span = price_container.find('span', class_='price') if price_container else None
+    
+    if not price_span:
+        price_p = card.find('p', class_='price')
+        price = price_p.text.strip() if price_p else None
+    else:
+        price = price_span.text.strip() if price_span else None
 
     p_tags = details.find_all('p')
     rating, colors, size, gender = None, None, None, None
-
+ 
     for p in p_tags:
         text = p.text.strip()
         if text.startswith("Rating:"):
@@ -47,7 +53,7 @@ def extract_product_data(card):
             gender = text
             
     timestamp = datetime.now().isoformat()
-
+ 
     product = {
         "Title": title,
         "Price": price,
@@ -58,16 +64,22 @@ def extract_product_data(card):
         "timestamp": timestamp
     }
     return product
-
+ 
 def scrape_products(delay=1):
+ 
+    ROOT_URL = "https://fashion-studio.dicoding.dev"
 
-    BASE_URL = "https://fashion-studio.dicoding.dev/?page={}"
     data = []
     
     for page_number in range(1, 51):
-        url = BASE_URL.format(page_number)
+        
+        if page_number == 1:
+            url = ROOT_URL + "/"
+        else:
+            url = f"{ROOT_URL}/page{page_number}"
+            
         print(f"Scraping halaman: {url}")
-
+ 
         try:
             content = fetching_content(url)
             if content:
@@ -77,7 +89,7 @@ def scrape_products(delay=1):
                 if not product_cards:
                     print(f"Tidak menemukan produk di halaman {page_number}. Mungkin halaman terakhir.")
                     break 
-
+ 
                 for card in product_cards:
                     product = extract_product_data(card)
                     if product:
@@ -87,9 +99,9 @@ def scrape_products(delay=1):
             else:
                 print(f"Gagal mengambil konten dari halaman {page_number}. Melanjutkan...")
                 continue
-
+ 
         except Exception as e:
             print(f"An error occurred during scraping on page {page_number}: {e}")
             continue 
-
+ 
     return data

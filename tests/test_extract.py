@@ -12,7 +12,7 @@ class TestExtract(TestCase):
             <div class="collection-card">
                 <div class="product-details">
                     <h3 class="product-title">Fake T-Shirt</h3>
-                    <div class="price-container">$100.00</div>
+                    <div class="price-container"><span class="price">$100.00</span></div>
                     <p>Rating: ⭐ 4.0 / 5</p>
                     <p>3 Colors</p>
                     <p>Size: M</p>
@@ -22,7 +22,7 @@ class TestExtract(TestCase):
             <div class="collection-card">
                 <div class="product-details">
                     <h3 class="product-title">Fake Hoodie</h3>
-                    <div class="price-container">$200.00</div>
+                    <div class="price-container"><span class="price">$200.00</span></div>
                     <p>Rating: ⭐ 5.0 / 5</p>
                     <p>5 Colors</p>
                     <p>Size: L</p>
@@ -32,6 +32,21 @@ class TestExtract(TestCase):
         </body></html>
         """
         self.fake_html_page_2 = "<html><body></body></html>"
+        
+        self.fake_html_price_unavailable = """
+        <html><body>
+            <div class="collection-card">
+                <div class="product-details">
+                    <h3 class="product-title">Pants 46</h3>
+                    <p class="price">Price Unavailable</p> 
+                    <p>Rating: Not Rated</p>
+                    <p>8 Colors</p>
+                    <p>Size: S</p>
+                    <p>Gender: Men</p>
+                </div>
+            </div>
+        </body></html>
+        """
 
     @patch('utils.extract.requests.Session')
     def test_fetching_content_success(self, mock_session):
@@ -67,6 +82,16 @@ class TestExtract(TestCase):
         self.assertEqual(product['Size'], 'Size: M')
         self.assertEqual(product['Gender'], 'Gender: Men')
         self.assertIn('timestamp', product)
+
+    def test_extract_product_data_unavailable(self):
+        soup = BeautifulSoup(self.fake_html_price_unavailable, "html.parser")
+        card = soup.find('div', class_='collection-card')
+        
+        product = extract_product_data(card)
+        
+        self.assertEqual(product['Title'], 'Pants 46')
+        self.assertEqual(product['Price'], 'Price Unavailable')
+        self.assertEqual(product['Rating'], 'Rating: Not Rated')
 
     @patch('utils.extract.fetching_content')
     def test_scrape_products_loop(self, mock_fetching_content):
